@@ -81,9 +81,11 @@ for FileIdx = 5%1:numel(Files)
             'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
     end
 
-Scoring(Scoring==-2) = -3;
-ScoringIndexes = [-3 -1 0 1];
+% Scoring(Scoring==-2) = -3;
+% ScoringIndexes = [-3 -1 0 1];
+ScoringIndexes = [-1 0 1];
     % plot
+    %%
     if PlotIndividuals
         Title = replace(replace(File, '.mat', ''), '_', ' ');
         FigureTitle = char(extractBefore(File, '.mat'));
