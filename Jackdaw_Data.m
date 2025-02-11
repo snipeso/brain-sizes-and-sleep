@@ -44,7 +44,7 @@ end
 
 % stages
 OldEpochLength = 4;
-NewEpochLength = 15; % Can be as low as 4, or as high as you want. Should be multiple of 4.
+NewEpochLength = 16; % Can be as low as 4, or as high as you want. Should be multiple of 4.
 SampleRate = 250;
 channel_indices = 11:42;
 
@@ -57,11 +57,11 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% run
-
+%%
 Files = oscip.list_filenames(DataFolder);
 
 %%% Cut data into days to speed up processing
-for FileIdx = 1 %:numel(Files)
+for FileIdx = 8 %1:numel(Files)
     A = tic;
 
     File = Files(FileIdx);
@@ -71,6 +71,7 @@ for FileIdx = 1 %:numel(Files)
 
 
     if exist(fullfile(EEGFolder, FileEEG1), 'file') && ~Refresh
+        disp(['Already did ', FileEEG1])
         continue
     else
         disp(['loading ', FilenameCore])
@@ -105,20 +106,20 @@ end
 
 %%% Run analysis
 
-
+%%
 Files = oscip.list_filenames(EEGFolder);
 
-for FileIdx = 1:numel(Files)
+for FileIdx = 19:numel(Files)
 
     File = Files{FileIdx};
 
     if exist(fullfile(ResultsFolder, File), 'file') & ~Refresh
         load(fullfile(ResultsFolder, File), 'Scoring', 'ScoringIndexes', 'ScoringLabels', ...
             'SmoothPower', 'Frequencies', 'Slopes', 'Intercepts', ...
-            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
+            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared', 'ScoringTable')
     else
 
-        load(fullfile(EEGFolder, File), 'EEG', 'ScoringStringCut')
+        load(fullfile(EEGFolder, File), 'EEG', 'ScoringStringCut', 'ScoringTable')
         Data = EEG.data;
 
         % calculate power
@@ -137,14 +138,14 @@ for FileIdx = 1:numel(Files)
 
         save(fullfile(ResultsFolder, File), 'Scoring', 'ScoringIndexes', 'ScoringLabels', ...
             'SmoothPower', 'Frequencies', 'Slopes', 'Intercepts', ...
-            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
+            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared', 'ScoringTable')
     end
 
     % plot
     close all
 
 
-    for ChIdx =  [1, 3, 13, 14, 21, 25 31] %1:size(Data, 1)
+    for ChIdx =  [1, 3, 14, 21, 25 31] %1:size(Data, 1)
 
         Title = [replace(replace(File, '.mat', ''), '_', ' '), '; ch ', num2str(ChIdx)];
         oscip.plot.temporal_overview(squeeze(WhitenedPower(ChIdx, :, :)), ...

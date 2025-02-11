@@ -54,7 +54,7 @@ end
 Files = oscip.list_filenames(DataFolder);
 
 %%% Cut data into days to speed up processing
-for FileIdx = 2:numel(Files)
+for FileIdx = 1:numel(Files)
 
     File = Files(FileIdx);
     FilenameCore = extractBefore(File, '.edf');
@@ -73,6 +73,8 @@ for FileIdx = 2:numel(Files)
         [Days, ScoringString] = calculate_days_from_sjoerd_scoring(ScoringString, ...
             size(EEGWhole.data, 2), EEGWhole.srate, OldEpochLength);
 
+                ScoringTime = 0:OldEpochLength:Days(end)+OldEpochLength;
+
         Idx = 1;
         for DayIdx = 1:numel(Days)-1
             Start = Days(DayIdx);
@@ -83,7 +85,10 @@ for FileIdx = 2:numel(Files)
             end
 
             EEG = pop_select(EEGWhole, 'time', [Start, End]);
-            save(fullfile(EEGFolder, [FilenameCore{1}, '_Day', num2str(Idx), '.mat']), 'EEG', 'ScoringString', 'ScoringTable', '-v7.3')
+             ScoringCuts = dsearchn(ScoringTime',[Start; End]);
+            ScoringStringCut = ScoringString(ScoringCuts(1):ScoringCuts(2));
+
+            save(fullfile(EEGFolder, [FilenameCore{1}, '_Day', num2str(Idx), '.mat']), 'EEG', 'ScoringStringCut', 'ScoringTable',  '-v7.3')
             Idx = Idx+1;
         end
     end
@@ -94,7 +99,7 @@ end
 
 %%
 Files = oscip.list_filenames(EEGFolder);
-Files(~contains(Files,'Day2')) = [];
+% Files(~contains(Files,'Day2')) = [];
 
 for FileIdx =  1:numel(Files)
 
@@ -107,7 +112,7 @@ for FileIdx =  1:numel(Files)
             'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
     else
         disp(['Loading ', File])
-        load(fullfile(EEGFolder, File), 'EEG', 'ScoringString')
+        load(fullfile(EEGFolder, File), 'EEG', 'ScoringStringCut')
         Data = EEG.data;
 
         % calculate power
@@ -116,7 +121,7 @@ for FileIdx =  1:numel(Files)
 
         % select most common score for each epoch (when new epoch is larger
         % than old)
-        [Scoring, ScoringIndexes, ScoringLabels] = oscip.convert_animal_scoring(ScoringString, size(EpochPower, 2), NewEpochLength, OldEpochLength);
+        [Scoring, ScoringIndexes, ScoringLabels] = oscip.convert_animal_scoring(ScoringStringCut, size(EpochPower, 2), NewEpochLength, OldEpochLength);
 
 
 
@@ -141,13 +146,18 @@ for FileIdx =  1:numel(Files)
         set(gcf, 'InvertHardcopy', 'off', 'Color', 'w')
         print(fullfile(ResultsFolder, [Title, '_time']), '-dtiff', '-r1000')
 
-        % oscip.plot.frequency_overview(SmoothPower, Frequencies, PeriodicPeaks, ...
-        %     Scoring, ScoringIndexes, ScoringLabels, ScatterSizeScaling, Alpha, true, true)
-        % xlim([5 20])
+        oscip.plot.frequency_overview(SmoothPower(ChIdx, :, :), Frequencies, PeriodicPeaks(ChIdx,:, :), ...
+            Scoring, ScoringIndexes, ScoringLabels, ScatterSizeScaling, Alpha, true, true)
+        xlim(FooofFrequencyRange)
         % ylim([1 6])
-        % title(Title)
-        % set(gcf, 'InvertHardcopy', 'off', 'Color', 'w')
-        % print(fullfile(Destination, [FigureTitle, '_frequency']), '-dtiff', '-r1000')
+        title(Title)
+        set(gcf, 'InvertHardcopy', 'off', 'Color', 'w')
+        print(fullfile(ResultsFolder, [Title, '_frequency']), '-dtiff', '-r1000')
+
+        figure('Units','normalized','Position',[  0.3536    0.6733    0.2156    0.1575])
+        oscip.plot.histogram_stages(Slopes(ChIdx, :), Scoring, ScoringLabels, ScoringIndexes);
+        title(Title)
+        print(fullfile(ResultsFolder, [Title, '_slopes']), '-dtiff', '-r1000')
     end
 end
 

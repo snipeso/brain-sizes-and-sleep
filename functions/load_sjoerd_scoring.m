@@ -12,7 +12,8 @@ if contains(ScoringFolder, 'Jackdaws')
     Wake ='Wake';
     NREM = 'SWS';
     REM = 'REM';
-    ScoringCol = 'Var4';
+
+    ScoringCol = 'Var1';
     if contains(ScoringFolder, '8SD')
         SD = '8SD';
     elseif contains(ScoringFolder, '4SD')
@@ -35,7 +36,13 @@ ScoringPath = fullfile(ScoringFolder, ScoringFilename);
 
 if exist(ScoringPath, 'file')
     ScoringTable = readtable(ScoringPath);
-    ScoringCell = ScoringTable.(ScoringCol);
+    if contains(ScoringFolder, 'Jackdaws')
+            ScoringCell = ScoringTable{:, 1};
+
+    else
+            ScoringCell = ScoringTable.(ScoringCol);
+
+    end
     ScoringCell(strcmp(ScoringCell, Wake)) = {'w'};
     ScoringCell(strcmp(ScoringCell, NREM)) = {'n'};
     ScoringCell(strcmp(ScoringCell, REM)) = {'r'};
