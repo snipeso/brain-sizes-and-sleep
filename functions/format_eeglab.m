@@ -13,14 +13,26 @@ EEG.srate = data.fsample;
 
 
 if isempty(chanlocs)
-for ChIdx = 1:size(EEG.data, 1)
-    chanlocs(ChIdx).label = data.label(ChIdx);
-    chanlocs(ChIdx).X = nan;
-    chanlocs(ChIdx).Y = nan;
-    chanlocs(ChIdx).Z = nan;
+    for ChIdx = 1:size(EEG.data, 1)
+        label = data.label{ChIdx};
+        chanlocs(ChIdx).labels = label;
+        chanlocs(ChIdx).X = nan;
+        chanlocs(ChIdx).Y = nan;
+        chanlocs(ChIdx).Z = nan;
+
+        if contains(label, 'EMG')
+            chanlocs(ChIdx).type = 'EMG';
+        elseif contains(label, 'EKG')
+            chanlocs(ChIdx).type = 'EKG';
+        elseif contains(label, 'ACC')
+            chanlocs(ChIdx).type = 'ACC';
+        else
+            chanlocs(ChIdx).type = 'EEG';
+        end
+    end
 end
-end
-    EEG.chanlocs = chanlocs;
+
+EEG.chanlocs = chanlocs;
 EEG.xmax = size(Data, 2)/EEG.srate;
 EEG.xmin = 0;
 EEG.time = data.time{1};

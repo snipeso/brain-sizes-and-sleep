@@ -1,4 +1,4 @@
-function [ScoringString, ScoringTable] = load_sjoerd_scoring(ScoringFolder, FilenameCore)
+function [ScoringString, ScoringTable, LightString] = load_sjoerd_scoring(ScoringFolder, FilenameCore)
 % loads in scoring based on how Sjoerd van Hasselt saves his EEG and
 % scoring names.
 
@@ -37,12 +37,16 @@ ScoringPath = fullfile(ScoringFolder, ScoringFilename);
 if exist(ScoringPath, 'file')
     ScoringTable = readtable(ScoringPath);
     if contains(ScoringFolder, 'Jackdaws')
-            ScoringCell = ScoringTable{:, 1};
-
+        ScoringCell = ScoringTable{:, 1};
+        LightString = '';
     else
-            ScoringCell = ScoringTable.(ScoringCol);
-
+        ScoringCell = ScoringTable.(ScoringCol);
+        LDCell = ScoringTable.Light_DarkPhase;
+        LDCell(strcmp(LDCell, 'Light')) = {'l'};
+        LDCell(strcmp(LDCell, 'Dark')) = {'d'};
+        LightString = char(LDCell)';
     end
+
     ScoringCell(strcmp(ScoringCell, Wake)) = {'w'};
     ScoringCell(strcmp(ScoringCell, NREM)) = {'n'};
     ScoringCell(strcmp(ScoringCell, REM)) = {'r'};
@@ -51,4 +55,5 @@ else
     warning(['No scoring found for ' FilenameCore{1}])
     ScoringString = '';
     ScoringTable = table();
+    LightString = '';
 end

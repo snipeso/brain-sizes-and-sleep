@@ -34,7 +34,7 @@ ScatterSizeScaling = 20;
 Alpha = .1;
 
 % locations
-DataFolder = 'F:\Animalia\Jackdaws\8SD';
+DataFolder = 'F:\Animalia\Jackdaws\4SD';
 EEGFolder = fullfile(DataFolder, 'MAT');
 ResultsFolder = fullfile(DataFolder, 'Results');
 ScoringFolder = fullfile(DataFolder, 'Scoring');
@@ -67,7 +67,7 @@ for FileIdx = 8 %1:numel(Files)
     File = Files(FileIdx);
     FilenameCore = extractBefore(File, '.edf');
     FileEEG1 = [FilenameCore{1}, '_Day1.mat'];
-    [ScoringString, ScoringTable] = load_sjoerd_scoring(ScoringFolder, FilenameCore);
+    [ScoringString, ScoringTable, LightString] = load_sjoerd_scoring(ScoringFolder, FilenameCore);
 
 
     if exist(fullfile(EEGFolder, FileEEG1), 'file') && ~Refresh
@@ -76,28 +76,10 @@ for FileIdx = 8 %1:numel(Files)
     else
         disp(['loading ', FilenameCore])
         [data, event] = load_edf(fullfile(DataFolder, File), SampleRate, channel_indices);
-        EEGWhole = format_eeglab(data);
+        EEG = format_eeglab(data);
 
-        [Days, ScoringString] = calculate_days_from_sjoerd_scoring(ScoringString, ...
-            size(EEGWhole.data, 2), EEGWhole.srate, OldEpochLength);
-        ScoringTime = 0:OldEpochLength:Days(end)+OldEpochLength;
-
-        for DayIdx = 1:numel(Days)-1
-            Start = Days(DayIdx);
-            End = Days(DayIdx+1);
-
-            if End > size(EEGWhole.data,2)
-                End = size(EEGWhole.data,2);
-            end
-
-            EEG = pop_select(EEGWhole, 'time', [Start, End]);
-
-            ScoringCuts = dsearchn(ScoringTime',[Start; End]);
-            ScoringStringCut = ScoringString(ScoringCuts(1):ScoringCuts(2));
-
-            disp(['Saving day ', num2str(DayIdx)])
-            save(fullfile(EEGFolder, [FilenameCore{1}, '_Day', num2str(DayIdx), '.mat']), 'EEG', 'ScoringStringCut', 'ScoringTable', '-v7.3')
-        end
+         chop_and_save_recording_by_days(EEG, ScoringString, LightString, ...
+           OldEpochLength, EEGFolder, FilenameCore{1})
     end
     clc
     disp(['it took ', num2str(round(toc(A)/60)), ' minutes to do ', FilenameCore])
