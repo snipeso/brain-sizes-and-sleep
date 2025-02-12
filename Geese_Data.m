@@ -113,9 +113,10 @@ for FileIdx =  1:numel(Files)
         % adjust scoring to new epoch length
         Scoring = oscip.utils.str2double_scoring(ScoringString);
         Light = oscip.utils.str2double_scoring(LightString, {'l', 'd'}, [1, 0]);
-
         Scoring = oscip.utils.resample_scoring(Scoring, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
         Light = oscip.utils.resample_scoring(Light, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
+        
+        
         SmoothPower = oscip.smooth_spectrum(EpochPower, Frequencies, SmoothSpan); % better for fooof if the spectra are smooth
 
         % run FOOOF

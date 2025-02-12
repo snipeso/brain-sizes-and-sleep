@@ -61,7 +61,7 @@ end
 Files = oscip.list_filenames(DataFolder);
 
 %%% Cut data into days to speed up processing
-for FileIdx = 8 %1:numel(Files)
+for FileIdx = 1:numel(Files)
     A = tic;
 
     File = Files(FileIdx);
@@ -91,47 +91,52 @@ end
 %%
 Files = oscip.list_filenames(EEGFolder);
 
-for FileIdx = 19:numel(Files)
+ScoringIndexes = [-1 0 1];
+ScoringLabels = {'n', 'w', 'r'};
+
+for FileIdx = 1:numel(Files)
 
     File = Files{FileIdx};
 
     if exist(fullfile(ResultsFolder, File), 'file') & ~Refresh
-        load(fullfile(ResultsFolder, File), 'Scoring', 'ScoringIndexes', 'ScoringLabels', ...
+        load(fullfile(ResultsFolder, File), 'Scoring', 'Light', 'ScoringIndexes', 'ScoringLabels', ...
             'SmoothPower', 'Frequencies', 'Slopes', 'Intercepts', ...
-            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared', 'ScoringTable')
+            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
     else
 
-        load(fullfile(EEGFolder, File), 'EEG', 'ScoringStringCut', 'ScoringTable')
+        load(fullfile(EEGFolder, File), 'EEG', 'ScoringString', 'LightString')
         Data = EEG.data;
 
         % calculate power
         [EpochPower, Frequencies] = oscip.compute_power_on_epochs(Data, ...
             SampleRate, NewEpochLength, WelchWindowLength, WelchOverlap);
 
-        % select most common score for each epoch (when new epoch is larger
-        % than old)
-        [Scoring, ScoringIndexes, ScoringLabels] = oscip.convert_animal_scoring(ScoringStringCut, size(EpochPower, 2), NewEpochLength, OldEpochLength);
-
+         % adjust scoring to new epoch length
+        Scoring = oscip.utils.str2double_scoring(ScoringString);
+        Light = oscip.utils.str2double_scoring(LightString, {'l', 'd'}, [1, 0]);
+        Scoring = oscip.utils.resample_scoring(Scoring, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
+        Light = oscip.utils.resample_scoring(Light, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
+        
         SmoothPower = oscip.smooth_spectrum(EpochPower, Frequencies, SmoothSpan); % better for fooof if the spectra are smooth
 
         % run FOOOF
         [Slopes, Intercepts, FooofFrequencies, PeriodicPeaks, WhitenedPower, Errors, RSquared] ...
             = oscip.fit_fooof_multidimentional(SmoothPower, Frequencies, FooofFrequencyRange, MaxError, MinRSquared);
 
-        save(fullfile(ResultsFolder, File), 'Scoring', 'ScoringIndexes', 'ScoringLabels', ...
+        save(fullfile(ResultsFolder, File), 'Scoring', 'Light', 'ScoringIndexes', 'ScoringLabels', ...
             'SmoothPower', 'Frequencies', 'Slopes', 'Intercepts', ...
-            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared', 'ScoringTable')
+            'FooofFrequencies', 'PeriodicPeaks', 'WhitenedPower', 'Errors','RSquared')
     end
 
     % plot
     close all
 
 
-    for ChIdx =  [1, 3, 14, 21, 25 31] %1:size(Data, 1)
+    for ChIdx =  [1, 3, 14, 17, 25 31] %1:size(Data, 1)
 
         Title = [replace(replace(File, '.mat', ''), '_', ' '), '; ch ', num2str(ChIdx)];
-        oscip.plot.temporal_overview(squeeze(WhitenedPower(ChIdx, :, :)), ...
-            FooofFrequencies, NewEpochLength, Scoring, ScoringIndexes, ScoringLabels, Slopes(ChIdx, :), [], [], Title)
+  oscip.plot.temporal_overview(squeeze(WhitenedPower(ChIdx, :, :)), ...
+            FooofFrequencies, NewEpochLength, [Scoring; Light], ScoringIndexes, ScoringLabels, Slopes(ChIdx, :), [], [], Title)
         set(gcf, 'InvertHardcopy', 'off', 'Color', 'w')
         print(fullfile(ResultsFolder, [Title, '_time']), '-dtiff', '-r1000')
 
