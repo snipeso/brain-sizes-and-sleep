@@ -78,8 +78,8 @@ for FileIdx = 1:numel(Files)
         [data, event] = load_edf(fullfile(DataFolder, File), SampleRate, channel_indices);
         EEG = format_eeglab(data);
 
-         chop_and_save_recording_by_days(EEG, ScoringString, LightString, ...
-           OldEpochLength, EEGFolder, FilenameCore{1})
+        chop_and_save_recording_by_days(EEG, ScoringString, LightString, ...
+            OldEpochLength, EEGFolder, FilenameCore{1})
     end
     clc
     disp(['it took ', num2str(round(toc(A)/60)), ' minutes to do ', FilenameCore])
@@ -111,12 +111,12 @@ for FileIdx = 1:numel(Files)
         [EpochPower, Frequencies] = oscip.compute_power_on_epochs(Data, ...
             SampleRate, NewEpochLength, WelchWindowLength, WelchOverlap);
 
-         % adjust scoring to new epoch length
+        % adjust scoring to new epoch length
         Scoring = oscip.utils.str2double_scoring(ScoringString);
         Light = oscip.utils.str2double_scoring(LightString, {'l', 'd'}, [1, 0]);
         Scoring = oscip.utils.resample_scoring(Scoring, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
         Light = oscip.utils.resample_scoring(Light, OldEpochLength, NewEpochLength, SampleRate, size(EEG.data, 2), size(EpochPower, 2));
-        
+
         SmoothPower = oscip.smooth_spectrum(EpochPower, Frequencies, SmoothSpan); % better for fooof if the spectra are smooth
 
         % run FOOOF
@@ -135,7 +135,7 @@ for FileIdx = 1:numel(Files)
     for ChIdx =  [1, 3, 14, 17, 25 31] %1:size(Data, 1)
 
         Title = [replace(replace(File, '.mat', ''), '_', ' '), '; ch ', num2str(ChIdx)];
-  oscip.plot.temporal_overview(squeeze(WhitenedPower(ChIdx, :, :)), ...
+        oscip.plot.temporal_overview(squeeze(WhitenedPower(ChIdx, :, :)), ...
             FooofFrequencies, NewEpochLength, [Scoring; Light], ScoringIndexes, ScoringLabels, Slopes(ChIdx, :), [], [], Title)
         set(gcf, 'InvertHardcopy', 'off', 'Color', 'w')
         print(fullfile(ResultsFolder, [Title, '_time']), '-dtiff', '-r1000')
